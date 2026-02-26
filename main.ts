@@ -98,16 +98,16 @@ class MediaSyncSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Folder to store images")
-			.setDesc("Specify a folder to store media files.")
+			.setName("媒体文件存储位置")
+			.setDesc("指定媒体文件的存储文件夹。")
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption(SaveDirectory.Default, "Default")
+					.addOption(SaveDirectory.Default, "默认")
 					.addOption(
 						SaveDirectory.AttachmentFolderPath,
-						"Obsidian attachment folder"
+						"Obsidian 附件文件夹"
 					)
-					.addOption(SaveDirectory.UserDefined, "Custom folder")
+					.addOption(SaveDirectory.UserDefined, "自定义文件夹")
 					.setValue(this.plugin.settings.setting.saveDirectory)
 					.onChange(async (value) => {
 						this.plugin.settings.setting.saveDirectory = value;
@@ -129,17 +129,51 @@ class MediaSyncSettingTab extends PluginSettingTab {
 			});
 
 		const customFolderSetting = new Setting(containerEl)
-			.setName("Custom folder name")
-			.setDesc("Specify folder name  where the media files will be stored.")
+			.setName("自定义文件夹名称")
+			.setDesc("指定媒体文件存储的文件夹名称。")
 			.addText((text) => {
 				text
-					.setPlaceholder("Custom folder name")
+					.setPlaceholder("自定义文件夹名称")
 					.setValue(this.plugin.settings.setting.resourceFolderName)
 					.onChange(async (value) => {
 						this.plugin.settings.setting.resourceFolderName = value;
 						await this.saveSettings();
 					})
 					.setDisabled(true);
+			});
+
+		new Setting(containerEl)
+			.setName("自定义扫描路径")
+			.setDesc(
+				"仅扫描这些文件夹中的 Markdown 文件（每行一个路径）。留空则扫描所有文件夹。设置后，排除文件夹设置将被忽略。"
+			)
+			.addTextArea((text) => {
+				text
+					.setPlaceholder("文件夹1/子文件夹\n文件夹2")
+					.setValue(this.plugin.settings.setting.includeFolders)
+					.onChange(async (value) => {
+						this.plugin.settings.setting.includeFolders = value;
+						await this.saveSettings();
+					});
+				text.inputEl.rows = 4;
+				text.inputEl.cols = 30;
+			});
+
+		new Setting(containerEl)
+			.setName("排除文件夹")
+			.setDesc(
+				"跳过这些文件夹中的 Markdown 文件（每行一个路径）。设置了自定义扫描路径时，此项将被忽略。"
+			)
+			.addTextArea((text) => {
+				text
+					.setPlaceholder("文件夹1/子文件夹\n文件夹2")
+					.setValue(this.plugin.settings.setting.excludeFolders)
+					.onChange(async (value) => {
+						this.plugin.settings.setting.excludeFolders = value;
+						await this.saveSettings();
+					});
+				text.inputEl.rows = 4;
+				text.inputEl.cols = 30;
 			});
 	}
 

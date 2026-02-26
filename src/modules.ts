@@ -30,13 +30,52 @@ export interface MediaSyncSettings {
 	setting: {
 		saveDirectory: SaveDirectory;
 		resourceFolderName: string;
+		excludeFolders: string;
+		includeFolders: string;
 	};
 }
 export const DEFAULT_SETTINGS: MediaSyncSettings = {
 	setting: {
 		saveDirectory: SaveDirectory.Default,
 		resourceFolderName: "",
+		excludeFolders: "",
+		includeFolders: "",
 	},
+};
+
+const parseFolderPaths = (paths: string): string[] => {
+	if (!paths || !paths.trim()) return [];
+	return paths
+		.split("\n")
+		.map((p) => p.trim())
+		.filter((p) => p.length > 0);
+};
+
+const filterFiles = (files: TFile[], settings: MediaSyncSettings): TFile[] => {
+	let filtered = files;
+
+	const includeFolders = parseFolderPaths(settings.setting.includeFolders);
+	const excludeFolders = parseFolderPaths(settings.setting.excludeFolders);
+
+	if (includeFolders.length > 0) {
+		filtered = filtered.filter((file) =>
+			includeFolders.some(
+				(folder) =>
+					file.path.startsWith(folder + "/") || file.path === folder
+			)
+		);
+	} else if (excludeFolders.length > 0) {
+		filtered = filtered.filter(
+			(file) =>
+				!excludeFolders.some(
+					(folder) =>
+						file.path.startsWith(folder + "/") ||
+						file.path === folder
+				)
+		);
+	}
+
+	return filtered;
 };
 
 const getFilePrefix = (): string => {
@@ -222,7 +261,7 @@ export const saveFiles = async (
 	if (selectFiles.length > 0) {
 		files = selectFiles;
 	} else {
-		files = app.vault.getMarkdownFiles();
+		files = filterFiles(app.vault.getMarkdownFiles(), settings);
 	}
 
 	const resorceFolderName = getResorceFolderName(app.vault, settings);
